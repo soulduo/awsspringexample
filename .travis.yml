@@ -1,0 +1,56 @@
+language: java
+sudo: true
+jdk:
+  - openjdk8
+dist: trusty
+before_install:
+  - chmod +x mvnw
+
+before_deploy:
+  - mkdir -p before-deploy
+  - cp scripts/*.sh before-deploy/
+  - cp appspec.yml before-deploy/
+  - cp target/*.jar before-deploy/
+  - cd before-deploy && zip -r before-deploy * # before-deploy로 이동 후 전체 압축
+  - cd ../ && mkdir -p deploy # 상위 디렉토리로 이동 후 deploy 디렉토리 생성
+  - mv before-deploy/before-deploy.zip deploy/awsspringexample.zip
+
+deploy:
+  - provider: s3
+    access_key_id: $AWS_ACCESS_KEY # Travis repo setting 설정값
+    secret_access_key: $AWS_SECRET_KEY # Travis repo setting 설정값
+    bucket: mountain-web-build # S3 버킷
+    region: ap-northeast-2
+    skip_cleanup: true
+    acl: private # zip 파일 접근 권한
+    local_dir: deploy # before_deploy에서 생성한 폴더
+    wait-until-deployed: true
+
+  - provider: codedeploy
+    access_key_id: $AWS_ACCESS_KEY # Travis repo setting 설정값
+    secret_access_key: $AWS_SECRET_KEY # Travis repo setting 설정값
+    bucket: mountain-web-build # S3 버킷
+    key: awsspringexample.zip
+    bundle_type: zip
+    application: mountain-web-service
+    deployment_group: mountain-web-service-group
+    region: ap-northeast-2
+    wait-until-deployed: true
+
+branches:
+  only:
+    - master
+
+# Travis CI 서버의 HOME
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.mvan'
+
+# script: "./mvan clean package"
+
+# CI 실행 완료 시 메일로 알람
+notifications:
+  email:
+    recipients:
+      - soulduo@gmail.com
