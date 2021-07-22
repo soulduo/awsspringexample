@@ -17,7 +17,7 @@ do
   echo "> ${RETRY_COUNT} 번째 시도"
   RESPONSE=$(curl -s http://127.0.0.1:${IDLE_PORT}/profile)
   UP_COUNT=$(echo ${RESPONSE} | grep 'real' | wc -l)
-  echo "> 결과 확인"
+  echo "> 결과 확인 ${RESPONSE} / ${UP_COUNT}"
   if [ ${UP_COUNT} -ge 1 ]
   then # $up_count >= 1 ("real" 문자열이 있는지 검증)
       echo "> Health check 성공"
